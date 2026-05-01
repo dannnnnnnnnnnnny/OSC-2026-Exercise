@@ -13,38 +13,38 @@ extern void* alloc_page();
 
 #define PAGE_OFFSET 0xffffffc000000000UL
 #define PAGE_SIZE   (1UL << 12)
-#define HPAGE_SIZE  (1UL << 30)
+#define PGD_SIZE    (1UL << 30)
 #define PFN_DOWN(x) ((x) >> 12)
 
-/* Page protection bits */
-#define PAGE_PRESENT  (1 << 0)
-#define PAGE_READ     (1 << 1)
-#define PAGE_WRITE    (1 << 2)
-#define PAGE_EXEC     (1 << 3)
-#define PAGE_USER     (1 << 4)
-#define PAGE_GLOBAL   (1 << 5)
-#define PAGE_ACCESSED (1 << 6)
-#define PAGE_DIRTY    (1 << 7)
-#define PAGE_SOFT     (3 << 8)
-#define PAGE_KERNEL                                                    \
-    (PAGE_PRESENT | PAGE_READ | PAGE_WRITE | PAGE_EXEC | PAGE_GLOBAL | \
-     PAGE_ACCESSED | PAGE_DIRTY)
-#define PAGE_BASE      (PAGE_DIRTY | PAGE_ACCESSED | PAGE_USER | PAGE_PRESENT)
-#define PAGE_RX        (PAGE_BASE | PAGE_READ | PAGE_EXEC)
-#define PAGE_RW        (PAGE_BASE | PAGE_READ | PAGE_WRITE)
-#define SATP_MODE_SV39 (8UL << 60)
+/* PTE descriptor bits (Sv39) */
+#define PTE_V  (1UL << 0)
+#define PTE_R  (1UL << 1)
+#define PTE_W  (1UL << 2)
+#define PTE_X  (1UL << 3)
+#define PTE_U  (1UL << 4)
+#define PTE_G  (1UL << 5)
+#define PTE_A  (1UL << 6)
+#define PTE_D  (1UL << 7)
+#define PTE_SOFT (3UL << 8)
+
+#define PROT_KERNEL    (PTE_V | PTE_R | PTE_W | PTE_X | PTE_G | PTE_A | PTE_D)
+#define PROT_USER_BASE (PTE_V | PTE_U | PTE_A | PTE_D)
+#define PROT_USER_RX   (PROT_USER_BASE | PTE_R | PTE_X)
+#define PROT_USER_RW   (PROT_USER_BASE | PTE_R | PTE_W)
+
+#define SATP_SV39 (8UL << 60)
 
 #define virt_to_phys(x) ((unsigned long)(x) - PAGE_OFFSET)
 #define phys_to_virt(x) ((unsigned long)(x) + PAGE_OFFSET)
 
-unsigned long __attribute__((section(".data"), aligned(PAGE_SIZE))) pg_dir[512];
+unsigned long __attribute__((section(".data"), aligned(PAGE_SIZE))) pgd[512];
 
 void setup_vm() {
-    for (int i = 0; i < NUM_PAGES / (HPAGE_SIZE / PAGE_SIZE); i++) {
-        pg_dir[256 + i] = (i * (HPAGE_SIZE / PAGE_SIZE)) << 10 | PAGE_KERNEL;
+    for (int i = 0; i < NUM_PAGES / (PGD_SIZE / PAGE_SIZE); i++) {
+        pgd[256 + i] = (i * (PGD_SIZE / PAGE_SIZE)) << 10 | PROT_KERNEL;
     }
-    asm("csrw satp, %0" ::"r"(PFN_DOWN((unsigned long)pg_dir) |
-                              SATP_MODE_SV39));
+    asm("csrw satp, %0" ::"r"(PFN_DOWN((unsigned long)pgd) |
+                              SATP_SV39));
     asm("sfence.vma");
 }
 
@@ -91,9 +91,9 @@ int exec(const char* filename) {
         if (!memcmp(p + sizeof(struct cpio_t), filename, namesize)) {
             void* program = alloc_page();  // The test program fits in one page
             memcpy(program, p + headsize, filesize);
-            map_pages(0x0, filesize, virt_to_phys(program), PAGE_RX);
+            map_pages(0x0, filesize, virt_to_phys(program), PROT_USER_RX);
             map_pages(0x3ffffff000, PAGE_SIZE, virt_to_phys(alloc_page()),
-                      PAGE_RW);
+                      PROT_USER_RW);
             asm volatile("csrw sepc, %0" : : "r"(0x0));
             asm volatile("csrw sscratch, sp");
             asm volatile("mv sp, %0" ::"r"(0x4000000000));
