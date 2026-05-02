@@ -1,4 +1,4 @@
-~extern char uart_getc(void);
+extern char uart_getc(void);
 extern void uart_putc(char c);
 extern void uart_puts(const char* s);
 extern void uart_hex(unsigned long h);

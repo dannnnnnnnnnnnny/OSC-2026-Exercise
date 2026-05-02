@@ -18,7 +18,4 @@ clear_bss:
     blt     a3, a4, clear_bss
 clear_bss_done:
     call    drop_identity_map
-
-    mv      a0, s0
-    mv      a1, s1
     tail    start_kernel
