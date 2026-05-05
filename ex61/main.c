@@ -42,10 +42,7 @@ static unsigned long __attribute__((section(".data"), aligned(PAGE_SIZE)))
     pgd[ENTRIES_PER_TABLE] = { 0 };
 
 static unsigned long __attribute__((section(".data"), aligned(PAGE_SIZE)))
-    pmd_kernel[LINEAR_MAP_GIB][ENTRIES_PER_TABLE] = { { 0 } };
-
-static unsigned long __attribute__((section(".data"), aligned(PAGE_SIZE)))
-    pmd_identity[LINEAR_MAP_GIB][ENTRIES_PER_TABLE] = { { 0 } };
+    pmd[LINEAR_MAP_GIB][ENTRIES_PER_TABLE] = { { 0 } };
 
 void setup_vm(void)
 {
