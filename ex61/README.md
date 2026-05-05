@@ -1,5 +1,9 @@
 # Sv39 Paging & Higher-half Kernel Booting
 
+## Exercise 6 Slide
+[OSC2026_lab6_exercise](<https://docs.google.com/presentation/d/1Wk0pZSu1GzPIp7RZP5O7sRoKsNXBfRnAV0kWlm3IqU4/edit?usp=sharing>)
+
+
 ## Introduction
 In this exercise, we will explore virtual memory management on the RISC-V architecture by implementing a bare-metal **Higher-half Kernel**. You will learn how to configure the **Sv39 Paging System**, set up multi-level page tables, and safely transition the CPU execution state from physical addresses to high virtual addresses.
 
